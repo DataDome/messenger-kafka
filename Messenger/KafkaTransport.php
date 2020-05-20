@@ -79,7 +79,7 @@ class KafkaTransport implements TransportInterface
 
                 $envelope = $this->serializer->decode([
                     'body' => $message->payload,
-                    'headers' => $message->headers,
+                    'headers' => property_exists($message, 'headers') ? $message->headers : null,
                 ]);
 
                 return [$envelope->with(new KafkaMessageStamp($message))];
