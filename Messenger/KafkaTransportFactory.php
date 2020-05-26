@@ -6,7 +6,6 @@ use Koco\Kafka\RdKafka\RdKafkaFactory;
 use Psr\Log\LoggerInterface;
 use RdKafka\Conf as KafkaConf;
 use RdKafka\KafkaConsumer;
-use RdKafka\TopicConf as KafkaTopicConf;
 use RdKafka\TopicPartition;
 use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
 use Symfony\Component\Messenger\Transport\TransportFactoryInterface;
@@ -21,11 +20,9 @@ use const RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS;
 class KafkaTransportFactory implements TransportFactoryInterface
 {
     private const DSN_PROTOCOLS = [
-        self::DSN_PROTOCOL_KAFKA,
-        self::DSN_PROTOCOL_KAFKA_SSL,
+        'kafka://',
+        'kafka+ssl://',
     ];
-    private const DSN_PROTOCOL_KAFKA = 'kafka://';
-    private const DSN_PROTOCOL_KAFKA_SSL = 'kafka+ssl://';
 
     /** @var LoggerInterface */
     private $logger;
@@ -51,7 +48,7 @@ class KafkaTransportFactory implements TransportFactoryInterface
     {
         $conf = new KafkaConf();
 
-        // Set a rebalance callback to log partition assignments (optional)
+        // Set a re balance callback to log partition assignments (optional)
         $conf->setRebalanceCb($this->createRebalanceCb($this->logger));
 
         $brokers = $this->stripProtocol($dsn);
@@ -61,14 +58,9 @@ class KafkaTransportFactory implements TransportFactoryInterface
             $conf->set($option, $value);
         }
 
-        $topicConf = new KafkaTopicConf();
-
         foreach ($options['topic_conf'] ?? [] as $option => $value) {
-            $topicConf->set($option, $value);
+            $conf->set($option, $value);
         }
-
-        // Set the configuration to use for subscribed/assigned topics
-        $conf->setDefaultTopicConf($topicConf);
 
         return new KafkaTransport(
             $this->logger,
