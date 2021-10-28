@@ -85,8 +85,7 @@ class KafkaTransport implements TransportInterface
 
                 return [$envelope->with(new KafkaMessageStamp($message))];
             case RD_KAFKA_RESP_ERR__PARTITION_EOF:
-                $this->logger->error('Kafka: Partition EOF reached. Waiting for next message ...');
-                throw new KafkaException($message->errstr(), $message->err);
+                $this->logger->info('Kafka: Partition EOF reached. Waiting for next message ...');
             case RD_KAFKA_RESP_ERR__TIMED_OUT:
                 $this->logger->error('Kafka: Connection error or timeout.');
                 throw new KafkaException($message->errstr(), $message->err);
