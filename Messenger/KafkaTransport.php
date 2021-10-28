@@ -148,7 +148,7 @@ class KafkaTransport implements TransportInterface
         $status = $producer->flush($this->flushTimeoutMs);
         if ($status !== 0) {
             $this->logger->error(sprintf('Kafka: Unable to send a message to the topic %s.', $this->topicName));
-            throw new KafkaException('Kafka: Unable to send a message to the topic %s.');
+            throw new KafkaException(sprintf('Kafka: Unable to send a message to the topic %s.', $this->topicName));
         }
 
         return $envelope;
