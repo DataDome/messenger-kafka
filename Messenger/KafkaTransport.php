@@ -88,7 +88,7 @@ class KafkaTransport implements TransportInterface
                 $this->logger->info('Kafka: Partition EOF reached. Waiting for next message ...');
                 break;
             case RD_KAFKA_RESP_ERR__TIMED_OUT:
-                $this->logger->warning('Kafka: Connection error or timeout.');
+                $this->logger->debug('Kafka: Consumer timeout.');
                 break;
             case RD_KAFKA_RESP_ERR__TRANSPORT:
                 $this->logger->error('Kafka: Broker transport failure.');

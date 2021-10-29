@@ -2,6 +2,7 @@
 
 namespace Koco\Kafka\Messenger;
 
+use Koco\Kafka\Exception\KafkaException;
 use Koco\Kafka\RdKafka\RdKafkaFactory;
 use Psr\Log\LoggerInterface;
 use RdKafka\Conf as KafkaConf;
@@ -50,6 +51,19 @@ class KafkaTransportFactory implements TransportFactoryInterface
 
         // Set a re balance callback to log partition assignments (optional)
         $conf->setRebalanceCb($this->createRebalanceCb($this->logger));
+        $conf->setErrorCb(function ($kafka, $err, $reason) use ($options) {
+            $this->logger->error('Kafka: Error during kafka produce or consume', [
+                'kafkaTopic' => $options['topic']['name'],
+                'kafkaError' => $err,
+                'kafkaReason' => $reason,
+            ]);
+            throw new KafkaException(sprintf(
+                'Kafka: Error during kafka produce or consume topic %s. Error code: %d - Error reason: %s',
+                $options['topic']['name'],
+                $err,
+                $reason
+            ));
+        });
 
         $brokers = $this->stripProtocol($dsn);
         $conf->set('metadata.broker.list', implode(',', $brokers));
