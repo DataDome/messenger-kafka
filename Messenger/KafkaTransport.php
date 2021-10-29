@@ -95,7 +95,7 @@ class KafkaTransport implements TransportInterface
                 throw new KafkaException($message->errstr(), $message->err);
             default:
                 $this->logger->error('Kafka: error during message consume.', [
-                    'KAFKA_ERROR' => $message->err
+                    'kafkaError' => $message->err
                 ]);
                 throw new KafkaException($message->errstr(), $message->err);
         }
@@ -151,8 +151,8 @@ class KafkaTransport implements TransportInterface
         $status = $producer->flush($this->flushTimeoutMs);
         if ($status !== 0) {
             $this->logger->error('Kafka: Unable to send a message to the topic.', [
-                'KAFKA_TOPIC' => $this->topicName,
-                'KAFKA_ERROR' => $status,
+                'kafkaTopic' => $this->topicName,
+                'kafkaError' => $status,
             ]);
             throw new KafkaException(sprintf(
                 'Kafka: Unable to send a message to the topic %s, kafka error %d.',
