@@ -2,6 +2,7 @@
 
 namespace Koco\Kafka\Messenger;
 
+use Koco\Kafka\Exception\KafkaException;
 use Koco\Kafka\RdKafka\RdKafkaFactory;
 use Psr\Log\LoggerInterface;
 use RdKafka\Conf as KafkaConf;
@@ -87,13 +88,16 @@ class KafkaTransport implements TransportInterface
                 $this->logger->info('Kafka: Partition EOF reached. Waiting for next message ...');
                 break;
             case RD_KAFKA_RESP_ERR__TIMED_OUT:
-                break;
+                $this->logger->error('Kafka: Connection error or timeout.');
+                throw new KafkaException($message->errstr(), $message->err);
             case RD_KAFKA_RESP_ERR__TRANSPORT:
-                $this->logger->debug('Kafka: Broker transport failure.');
-                break;
+                $this->logger->error('Kafka: Broker transport failure.');
+                throw new KafkaException($message->errstr(), $message->err);
             default:
-                throw new \Exception($message->errstr(), $message->err);
-                break;
+                $this->logger->error('Kafka: error during message consume.', [
+                    'kafkaError' => $message->err
+                ]);
+                throw new KafkaException($message->errstr(), $message->err);
         }
 
         return [];
@@ -144,7 +148,18 @@ class KafkaTransport implements TransportInterface
 
         $topic->producev(RD_KAFKA_PARTITION_UA, 0, $payload['body'], null, $payload['headers'] ?? null);
 
-        $producer->flush($this->flushTimeoutMs);
+        $status = $producer->flush($this->flushTimeoutMs);
+        if ($status !== 0) {
+            $this->logger->error('Kafka: Unable to send a message to the topic.', [
+                'kafkaTopic' => $this->topicName,
+                'kafkaError' => $status,
+            ]);
+            throw new KafkaException(sprintf(
+                'Kafka: Unable to send a message to the topic %s, kafka error %d.',
+                $this->topicName,
+                $status
+            ));
+        }
 
         return $envelope;
     }
