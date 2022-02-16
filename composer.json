@@ -8,10 +8,10 @@
     "php": "^7.4 || ^8.0",
     "ext-json": "*",
     "ext-rdkafka": "^5.0||^6.0",
-    "symfony/config": "^5.0",
-    "symfony/dependency-injection": "^5.0",
-    "symfony/http-kernel": "^5.0",
-    "symfony/messenger": "^5.0"
+    "symfony/config": "^5.0||^6.0",
+    "symfony/dependency-injection": "^5.0||^6.0",
+    "symfony/http-kernel": "^5.0||^6.0",
+    "symfony/messenger": "^5.0||^6.0"
   },
   "autoload": {
     "psr-4": { "Koco\\Kafka\\": "" },
@@ -25,9 +25,9 @@
   "require-dev": {
     "friendsofphp/php-cs-fixer": "^2.16",
     "kwn/php-rdkafka-stubs": "^2.0",
-    "symfony/phpunit-bridge": "^5.0",
-    "symfony/framework-bundle": "^5.0",
-    "symfony/serializer": "^5.0",
-    "symfony/property-access": "^5.0"
+    "symfony/phpunit-bridge": "^5.0||^6.0",
+    "symfony/framework-bundle": "^5.0||^6.0",
+    "symfony/serializer": "^5.0||^6.0",
+    "symfony/property-access": "^5.0||^6.0"
   }
 }
