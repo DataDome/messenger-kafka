@@ -1,0 +1,5 @@
+# Team dashboard is the default owner for everything in
+# this repo. Unless a later match takes precedence,
+# @DataDome/team-dashboard will be requested for
+# review when someone opens a pull request.
+*       @DataDome/team-dashboard
