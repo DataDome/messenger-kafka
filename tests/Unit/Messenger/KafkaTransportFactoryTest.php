@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Koco\Kafka\Tests\Unit\Messenger;
 
 use Koco\Kafka\Messenger\KafkaTransportFactory;
+use Koco\Kafka\RdKafka\RdKafkaFactory;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
@@ -21,21 +24,20 @@ class KafkaTransportFactoryTest extends TestCase
         /** @var LoggerInterface $logger */
         $logger = $this->createMock(LoggerInterface::class);
 
-        $this->factory = new KafkaTransportFactory($logger);
+        $this->factory = new KafkaTransportFactory(new RdKafkaFactory(), $logger);
 
         $this->serializerMock = $this->createMock(SerializerInterface::class);
     }
 
     public function testSupports()
     {
-        $this->assertTrue($this->factory->supports('kafka://my-local-kafka:9092', []));
-        $this->assertTrue($this->factory->supports('kafka+ssl://my-staging-kafka:9093', []));
-        $this->assertTrue($this->factory->supports('kafka+ssl://prod-kafka-01:9093,kafka+ssl://prod-kafka-01:9093,kafka+ssl://prod-kafka-01:9093', []));
+        self::assertTrue($this->factory->supports('kafka://my-local-kafka:9092', []));
+        self::assertTrue($this->factory->supports('kafka+ssl://my-staging-kafka:9093', []));
+        self::assertTrue($this->factory->supports('kafka+ssl://prod-kafka-01:9093,kafka+ssl://prod-kafka-01:9093,kafka+ssl://prod-kafka-01:9093', []));
     }
 
     /**
      * @group legacy
-     * @expectedDeprecation Unsilenced deprecation: Function RdKafka\Conf::setDefaultTopicConf() is deprecated
      */
     public function testCreateTransport()
     {
@@ -52,6 +54,6 @@ class KafkaTransportFactoryTest extends TestCase
             $this->serializerMock
         );
 
-        $this->assertInstanceOf(TransportInterface::class, $transport);
+        self::assertInstanceOf(TransportInterface::class, $transport);
     }
 }

@@ -9,3 +9,5 @@ composer.lock
 /var
 /coverage
 .DS_Store
+/results
+/.php-cs-fixer.cache

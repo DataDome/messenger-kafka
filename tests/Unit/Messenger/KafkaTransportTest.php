@@ -1,8 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Koco\Kafka\Tests\Unit\Messenger;
 
 use Koco\Kafka\Messenger\KafkaMessageStamp;
+use Koco\Kafka\Messenger\KafkaReceiverProperties;
+use Koco\Kafka\Messenger\KafkaSenderProperties;
 use Koco\Kafka\Messenger\KafkaTransport;
 use Koco\Kafka\RdKafka\RdKafkaFactory;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -59,21 +63,26 @@ class KafkaTransportTest extends TestCase
             $this->mockLogger,
             $this->mockSerializer,
             new RdKafkaFactory(),
-            new KafkaConf(),
-            'test',
-            10000,
-            10000,
-            false
+            new KafkaSenderProperties(
+                new KafkaConf(),
+                'test',
+                10000,
+                10000
+            ),
+            new KafkaReceiverProperties(
+                new KafkaConf(),
+                'test',
+                10000,
+                false
+            )
         );
 
-        $this->assertInstanceOf(TransportInterface::class, $transport);
+        self::assertInstanceOf(TransportInterface::class, $transport);
     }
 
     public function testGet()
     {
-        $this->mockRdKafkaConsumer
-            ->method('subscribe')
-            ->willReturn(true);
+        $this->mockRdKafkaConsumer->method('subscribe');
 
         $testMessage = new Message();
         $testMessage->err = RD_KAFKA_RESP_ERR_NO_ERROR;
@@ -91,7 +100,7 @@ class KafkaTransportTest extends TestCase
             ->method('consume')
             ->willReturn($testMessage);
 
-        $this->mockSerializer->expects($this->once())
+        $this->mockSerializer->expects(self::once())
             ->method('decode')
             ->with([
                 'body' => '{"data":null}',
@@ -99,6 +108,9 @@ class KafkaTransportTest extends TestCase
                     'type' => TestMessage::class,
                     'Content-Type' => 'application/json',
                 ],
+                'key' => null,
+                'offset' => 0,
+                'timestamp' => 1586861356,
             ])
             ->willReturn(new Envelope(new TestMessage()));
 
@@ -106,30 +118,37 @@ class KafkaTransportTest extends TestCase
             $this->mockLogger,
             $this->mockSerializer,
             $this->mockRdKafkaFactory,
-            new KafkaConf(),
-            'test',
-            10000,
-            10000,
-            false
+            new KafkaSenderProperties(
+                new KafkaConf(),
+                'test',
+                10000,
+                10000
+            ),
+            new KafkaReceiverProperties(
+                new KafkaConf(),
+                'test',
+                10000,
+                false
+            )
         );
 
         $receivedMessages = $transport->get();
-        $this->assertArrayHasKey(0, $receivedMessages);
+        self::assertArrayHasKey(0, $receivedMessages);
 
         /** @var Envelope $receivedMessage */
         $receivedMessage = $receivedMessages[0];
-        $this->assertInstanceOf(Envelope::class, $receivedMessage);
-        $this->assertInstanceOf(TestMessage::class, $receivedMessage->getMessage());
+        self::assertInstanceOf(Envelope::class, $receivedMessage);
+        self::assertInstanceOf(TestMessage::class, $receivedMessage->getMessage());
 
         $stamps = $receivedMessage->all();
-        $this->assertCount(1, $stamps);
-        $this->assertArrayHasKey(KafkaMessageStamp::class, $stamps);
+        self::assertCount(1, $stamps);
+        self::assertArrayHasKey(KafkaMessageStamp::class, $stamps);
 
         $kafkaMessageStamps = $stamps[KafkaMessageStamp::class];
-        $this->assertCount(1, $kafkaMessageStamps);
+        self::assertCount(1, $kafkaMessageStamps);
 
         /** @var KafkaMessageStamp $kafkaMessageStamp */
         $kafkaMessageStamp = $kafkaMessageStamps[0];
-        $this->assertEquals($testMessage, $kafkaMessageStamp->getMessage());
+        self::assertSame($testMessage, $kafkaMessageStamp->getMessage());
     }
 }
