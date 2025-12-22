@@ -1,0 +1,78 @@
+name: Tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.3', '8.4', '8.5']
+        symfony: ['^6.4', '^7.3', '^7.4', '^8.0']
+        exclude:
+          - php: '8.3'
+            symfony: '^8.0'
+          - php: '8.3'
+            symfony: '^7.4'
+
+    services:
+      kafka:
+        image: lensesio/fast-data-dev
+        env:
+          ADV_HOST: 127.0.0.1
+          SAMPLEDATA: 0
+          RUNTESTS: 0
+          FORWARDLOGS: 0
+        ports:
+          - 9092:9092
+          - 8081:8081
+          - 8082:8082
+          - 8083:8083
+          - 2181:2181
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Validate composer.json and composer.lock
+        run: composer validate
+
+      - name: Install rdkafka
+        run:
+          sudo add-apt-repository universe && sudo apt update && sudo apt install netcat-traditional librdkafka1 librdkafka-dev
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "${{ matrix.php }}"
+          coverage: xdebug
+          tools: pecl, phpunit
+          extensions: rdkafka
+          ini-values: post_max_size=256M, short_open_tag=On
+
+      - name: check if rdkafka is there
+        run: php -v && php --ri rdkafka
+
+      - name: Install dependencies
+        run: |
+          composer global require --no-progress --no-scripts --no-plugins "symfony/flex:^2.4"
+          composer global config --no-plugins allow-plugins.symfony/flex true
+          composer config extra.symfony.require "${{ matrix.symfony }}"
+          composer update --prefer-dist --no-progress
+
+      - name: Wait for Kafka
+        run: .github/workflows/wait-for-kafka.sh
+
+      - name: Unit Tests
+        run: ./vendor/bin/simple-phpunit --log-junit results/tests/junit.xml
+
+      #- name: try to produce
+      #  run: echo "test" > testfile.json && kafkacat -b 0.0.0.0:9092 -t kafkacat_test -P testfile.json
+
+      # Docs: https://getcomposer.org/doc/articles/scripts.md
+      #- name: Run test suite
+      #  run: phpunit --log-junit results/tests/junit.xml --coverage-html results/coverage-report --coverage-clover clover.xml
